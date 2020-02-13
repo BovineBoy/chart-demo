@@ -8,10 +8,13 @@ export default class BasicChart extends Component {
     this.state = {
       width: 'long',
       chart: null,
-      chartData: []
+      chartData: [],
+      fields: ['启蒙', '海燕', '芦苇', '白杨']
     }
     this.handleBtnClick = this.handleBtnClick.bind(this)
+    this.handleToggleBtnClick = this.handleToggleBtnClick.bind(this)
   }
+
   async componentDidMount() {
     const data = await this.getData()
     this.chartData = data
@@ -30,7 +33,7 @@ export default class BasicChart extends Component {
   }
 
   getData() {
-    return new Promise((resolve, reject) => {
+    return new Promise(resolve => {
       const data = [
         { month: '2019.01', 启蒙: 20.0, 芦苇: 3.9, 海燕: 3.4, 白杨: 5.2 },
         { month: '2019.02', 启蒙: 19.0, 芦苇: 4.2, 海燕: 3.4, 白杨: 5.2 },
@@ -52,11 +55,9 @@ export default class BasicChart extends Component {
   renderChart() {
     const ds = new DataSet()
     const dv = ds.createView().source(this.chartData)
-    console.log(dv)
-
     dv.transform({
       type: 'fold',
-      fields: ['启蒙', '芦苇', '海燕', '白杨'], // 展开字段集
+      fields: this.state.fields, // 展开字段集
       key: 'school', // key字段
       value: 'percent' // value字段
     })
@@ -82,7 +83,6 @@ export default class BasicChart extends Component {
 
     // 纵坐标轴
     this.chart.axis('percent', {
-      alias: '设置',
       label: {
         formatter: val => {
           return val + '%'
@@ -106,34 +106,46 @@ export default class BasicChart extends Component {
       }
     })
 
-    this.chart.legend('school', {
-      position: 'top-right'
-    })
+    this.chart.legend(false)
 
     this.chart
       .line()
       .position('month*percent')
       .color('school')
-      .shape('smooth')
+    // .shape('smooth')
 
     this.chart
       .point()
       .position('month*percent')
       .color('school')
       .size(4)
-      .shape('circle')
-      .style({
-        stroke: '#fff',
-        lineWidth: 1
-      })
+      .shape('')
+    // .style({
+    //   stroke: '#fff',
+    //   lineWidth: 1
+    // })
 
     this.chart.render()
+  }
+
+  handleToggleBtnClick() {
+    this.chart.destroy()
+    console.log(this.state.fields)
+    console.log(this.state.fields.includes('白杨'))
+    this.state.fields.includes('白杨')
+      ? this.setState({ fields: ['启蒙', '海燕', '芦苇'] }, () => {
+          this.renderChart()
+        })
+      : this.setState({ fields: ['启蒙', '海燕', '芦苇', '白杨'] }, () => {
+          this.renderChart()
+        })
   }
 
   render() {
     return (
       <div>
         <button onClick={this.handleBtnClick}>切换长度</button>
+        <button onClick={this.handleToggleBtnClick}>隐藏/显示白杨数据</button>
         <p>优点：适应性宽度响应很快</p>
         <p>
           缺陷：有一定可以忽略不计的延迟，如果把父元素的长度切换做过渡效果，则会造成不同步情况，快速切换宽度消耗性能
